@@ -32,12 +32,8 @@ export default function QRCodeModal({ token, onClose }: QRCodeModalProps) {
       try {
         const { token: generatedToken, expiresAt } =
           await generateQrToken(token);
-        const appBaseUrl =
-          process.env.NEXT_PUBLIC_APP_URL ||
-          (typeof window !== "undefined" ? window.location.origin : "");
-        const payload = appBaseUrl
-          ? `${appBaseUrl}/?pairToken=${encodeURIComponent(generatedToken)}`
-          : `syncly-pair:${generatedToken}`;
+        const appBaseUrl = window.location.origin;
+        const payload = `${appBaseUrl}/?pairToken=${encodeURIComponent(generatedToken)}`;
 
         const url = await QRCode.toDataURL(payload, {
           margin: 1,
