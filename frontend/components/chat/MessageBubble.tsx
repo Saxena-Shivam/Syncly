@@ -13,7 +13,7 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
   const showDocument = message.type === "document" && message.fileUrl;
 
   const documentName = showDocument
-    ? decodeURIComponent(message.fileUrl.split("/").pop() || "Document")
+    ? decodeURIComponent((message.fileUrl || "").split("/").pop() || "Document")
     : "";
   const documentExtension = showDocument
     ? (documentName.split(".").pop() || "file").toUpperCase()
@@ -52,13 +52,45 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
           )}
         >
           {showImage ? (
-            <a href={message.fileUrl} target="_blank" rel="noreferrer">
-              <img
-                src={message.fileUrl}
-                alt={message.content || "Shared image"}
-                className="max-h-64 w-full rounded-md object-cover"
-              />
-            </a>
+            <div className="space-y-2">
+              <a href={message.fileUrl} target="_blank" rel="noreferrer">
+                <img
+                  src={message.fileUrl}
+                  alt={message.content || "Shared image"}
+                  className="max-h-64 w-full rounded-md object-cover"
+                />
+              </a>
+              <div className="flex items-center gap-2">
+                <a
+                  href={message.fileUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded px-2 py-1 text-xs font-medium",
+                    message.isOwn
+                      ? "bg-accent-foreground/20 hover:bg-accent-foreground/30"
+                      : "bg-muted hover:bg-muted/80",
+                  )}
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  Open
+                </a>
+
+                <a
+                  href={message.fileUrl}
+                  download
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded px-2 py-1 text-xs font-medium",
+                    message.isOwn
+                      ? "bg-accent-foreground/20 hover:bg-accent-foreground/30"
+                      : "bg-muted hover:bg-muted/80",
+                  )}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Save
+                </a>
+              </div>
+            </div>
           ) : null}
 
           {showVideo ? (

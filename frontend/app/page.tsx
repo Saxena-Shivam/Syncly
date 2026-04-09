@@ -932,14 +932,14 @@ export default function Home() {
                 ))}
               </div>
 
-              <div className="mt-6 rounded-2xl border border-border bg-background/70 p-4 text-sm text-muted-foreground">
+              {/* <div className="mt-6 rounded-2xl border border-border bg-background/70 p-4 text-sm text-muted-foreground">
                 <p className="font-medium text-foreground">Backend status</p>
                 <p className="mt-1">Connected to {API_BASE}</p>
                 <p className="mt-1">
                   Google client id is no longer required by the frontend auth
                   flow.
                 </p>
-              </div>
+              </div> */}
             </section>
           </div>
         </div>

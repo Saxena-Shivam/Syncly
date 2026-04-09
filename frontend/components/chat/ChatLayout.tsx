@@ -38,19 +38,68 @@ export default function ChatLayout({
   token,
   onLogout: _onLogout,
 }: ChatLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" && window.innerWidth < 768,
+  );
+  const [showChat, setShowChat] = useState(isMobile ? false : true);
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (!mobile) {
+        setShowChat(true);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const activeRoom =
     rooms.find((r) => r.id === activeRoomId) ||
     (searchResults || []).find((r) => r.id === activeRoomId);
 
+  const handleSelectRoom = (roomId: string) => {
+    onSelectRoom(roomId);
+    if (isMobile) {
+      setShowChat(true);
+    }
+  };
+
+  // Mobile: show chat list or chat panel based on selection
+  if (isMobile) {
+    return showChat ? (
+      <ChatPanel
+        room={activeRoom}
+        messages={messages}
+        onSendMessage={onSendMessage}
+        onUploadFile={onUploadFile}
+        onTypingStart={onTypingStart}
+        onTypingStop={onTypingStop}
+        isTyping={isTyping}
+        token={token}
+        sidebarOpen={true}
+        onToggleSidebar={() => setShowChat(false)}
+      />
+    ) : (
+      <Sidebar
+        rooms={rooms}
+        searchResults={searchResults}
+        activeRoomId={activeRoomId}
+        searchQuery={userSearch}
+        isSearching={isSearchingUsers}
+        onSearchChange={onUserSearchChange}
+        onSelectRoom={handleSelectRoom}
+      />
+    );
+  }
+
+  // Desktop: show both sidebar and chat panel
   return (
     <div className="flex h-full w-full bg-background">
       {/* Sidebar */}
-      <div
-        className={`transition-all duration-300 ${
-          sidebarOpen ? "w-1/4 md:w-1/3 lg:w-1/4" : "w-0"
-        } hidden md:block border-r border-border`}
-      >
+      <div className="w-1/4 border-r border-border hidden md:flex flex-col">
         <Sidebar
           rooms={rooms}
           searchResults={searchResults}
@@ -73,36 +122,10 @@ export default function ChatLayout({
           onTypingStop={onTypingStop}
           isTyping={isTyping}
           token={token}
-          sidebarOpen={sidebarOpen}
-          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+          sidebarOpen={true}
+          onToggleSidebar={() => setShowChat(false)}
         />
       </div>
-
-      {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 md:hidden z-40 bg-black/50"
-          onClick={() => setSidebarOpen(false)}
-        >
-          <div
-            className="w-3/4 h-full bg-sidebar border-r border-border overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Sidebar
-              rooms={rooms}
-              searchResults={searchResults}
-              activeRoomId={activeRoomId}
-              searchQuery={userSearch}
-              isSearching={isSearchingUsers}
-              onSearchChange={onUserSearchChange}
-              onSelectRoom={(roomId) => {
-                onSelectRoom(roomId);
-                setSidebarOpen(false);
-              }}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

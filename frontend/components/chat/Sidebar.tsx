@@ -43,13 +43,27 @@ export default function Sidebar({
       )
     : [];
 
+  const totalUnread = filteredRooms.reduce(
+    (sum, room) => sum + room.unreadCount,
+    0,
+  );
+
   return (
     <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
       {/* Header */}
       <div className="px-4 py-3 border-b border-sidebar-border flex items-center justify-between">
-        <p className="text-xs uppercase tracking-[0.12em] text-sidebar-foreground/70">
-          Chats
-        </p>
+        <div className="flex items-center gap-2">
+          <p className="text-xs uppercase tracking-[0.12em] text-sidebar-foreground/70">
+            Chats
+          </p>
+          {totalUnread > 0 && (
+            <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center">
+              <span className="text-xs font-bold text-white">
+                {totalUnread > 9 ? "9+" : totalUnread}
+              </span>
+            </div>
+          )}
+        </div>
         <Input
           value={searchValue}
           onChange={(event) => handleSearchChange(event.target.value)}
