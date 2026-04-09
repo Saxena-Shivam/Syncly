@@ -10,15 +10,15 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Syncly - Real-time Chat",
   description: "Connect with friends in real-time",
-  generator: "v0.app",
+  applicationName: "Syncly",
   icons: {
     icon: [
       {
-        url: "/icon-light-32x32.png",
+        url: "/icon.svg",
         media: "(prefers-color-scheme: light)",
       },
       {
-        url: "/icon-dark-32x32.png",
+        url: "/icon.svg",
         media: "(prefers-color-scheme: dark)",
       },
       {
