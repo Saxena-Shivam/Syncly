@@ -1,9 +1,7 @@
 import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ChatItem from "./ChatItem";
 import { ChatRoom } from "@/types/chat";
-import { Search, X } from "lucide-react";
 
 interface SidebarProps {
   rooms: ChatRoom[];
@@ -25,7 +23,6 @@ export default function Sidebar({
   onSelectRoom,
 }: SidebarProps) {
   const [localSearch, setLocalSearch] = useState("");
-  const [showSearchPopup, setShowSearchPopup] = useState(false);
 
   const searchValue = searchQuery ?? localSearch;
 
@@ -46,11 +43,6 @@ export default function Sidebar({
       )
     : [];
 
-  const closeSearchPopup = () => {
-    setShowSearchPopup(false);
-    handleSearchChange("");
-  };
-
   return (
     <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
       {/* Header */}
@@ -58,36 +50,16 @@ export default function Sidebar({
         <p className="text-xs uppercase tracking-[0.12em] text-sidebar-foreground/70">
           Chats
         </p>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setShowSearchPopup((current) => !current)}
-          className="h-8 w-8 text-sidebar-foreground/80 hover:text-sidebar-foreground"
-          aria-label="Search users"
-        >
-          <Search className="w-4 h-4" />
-        </Button>
+        <Input
+          value={searchValue}
+          onChange={(event) => handleSearchChange(event.target.value)}
+          placeholder="Search"
+          className="h-8 w-full max-w-[10rem] bg-sidebar-accent border-sidebar-border text-sidebar-foreground"
+        />
       </div>
 
-      {showSearchPopup ? (
+      {searchValue.trim() ? (
         <div className="px-3 py-2 border-b border-sidebar-border bg-sidebar/95 space-y-2">
-          <div className="flex items-center gap-2">
-            <Input
-              value={searchValue}
-              onChange={(event) => handleSearchChange(event.target.value)}
-              placeholder="Search username"
-              className="h-8 w-full max-w-[16rem] bg-sidebar-accent border-sidebar-border text-sidebar-foreground"
-            />
-            <button
-              type="button"
-              onClick={closeSearchPopup}
-              className="rounded-md p-1.5 text-sidebar-foreground/70 hover:bg-sidebar-accent"
-              aria-label="Close search"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-
           {isSearching ? (
             <p className="text-xs text-sidebar-foreground/70 px-1">
               Searching...
@@ -95,27 +67,21 @@ export default function Sidebar({
           ) : null}
 
           <div className="max-h-52 overflow-y-auto space-y-2">
-            {searchValue.trim() ? (
-              visibleSearchResults.length ? (
-                visibleSearchResults.map((room) => (
-                  <ChatItem
-                    key={`search-${room.id}`}
-                    room={room}
-                    isActive={room.id === activeRoomId}
-                    onClick={() => {
-                      onSelectRoom(room.id);
-                      closeSearchPopup();
-                    }}
-                  />
-                ))
-              ) : (
-                <p className="text-sm text-sidebar-foreground/70 px-2 py-1">
-                  No matching users.
-                </p>
-              )
+            {visibleSearchResults.length ? (
+              visibleSearchResults.map((room) => (
+                <ChatItem
+                  key={`search-${room.id}`}
+                  room={room}
+                  isActive={room.id === activeRoomId}
+                  onClick={() => {
+                    onSelectRoom(room.id);
+                    handleSearchChange("");
+                  }}
+                />
+              ))
             ) : (
               <p className="text-sm text-sidebar-foreground/70 px-2 py-1">
-                Type username to search.
+                No matching users.
               </p>
             )}
           </div>

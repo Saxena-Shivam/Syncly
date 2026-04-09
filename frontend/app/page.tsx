@@ -20,6 +20,7 @@ import {
   API_BASE,
   ApiMessage,
   ApiUser,
+  connectViaQrToken,
   getConversations,
   getCurrentUser,
   getMessages,
@@ -111,6 +112,7 @@ export default function Home() {
   const userLookupRef = useRef<Record<string, ApiUser>>({});
   const activeUserIdRef = useRef("");
   const bootstrappedTokenRef = useRef<string | null>(null);
+  const handledPairTokenRef = useRef<string | null>(null);
 
   const userLookup = useMemo(() => {
     const map: Record<string, ApiUser> = {};
@@ -456,6 +458,36 @@ export default function Home() {
     emitStopTyping(activeUserId);
   }, [activeUserId]);
 
+  const handleSelectRoom = useCallback(
+    (userId: string) => {
+      setActiveUserId(userId);
+
+      setUsers((prev) => {
+        if (prev.some((user) => user.id === userId)) {
+          return prev;
+        }
+
+        const candidate = searchResults.find((user) => user.id === userId);
+        if (!candidate) {
+          return prev;
+        }
+
+        return [
+          {
+            ...candidate,
+            lastMessage: candidate.lastMessage || "",
+            lastMessageAt:
+              candidate.lastMessageAt ||
+              candidate.createdAt ||
+              new Date().toISOString(),
+          },
+          ...prev,
+        ];
+      });
+    },
+    [searchResults],
+  );
+
   useEffect(() => {
     if (typeof window === "undefined") {
       return;
@@ -622,6 +654,36 @@ export default function Home() {
   }, [activeUserId, loadMessagesForUser, messagesByUser, token]);
 
   useEffect(() => {
+    if (screen !== "chat" || !token) {
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    const pairToken = url.searchParams.get("pairToken")?.trim() || "";
+
+    if (!pairToken || handledPairTokenRef.current === pairToken) {
+      return;
+    }
+
+    handledPairTokenRef.current = pairToken;
+
+    const connectFromScan = async () => {
+      try {
+        await connectViaQrToken(token, pairToken);
+      } catch (error) {
+        setErrorText(
+          error instanceof Error ? error.message : "Failed to connect device",
+        );
+      } finally {
+        url.searchParams.delete("pairToken");
+        window.history.replaceState({}, "", url.toString());
+      }
+    };
+
+    void connectFromScan();
+  }, [screen, token]);
+
+  useEffect(() => {
     if (screen !== "chat" || !token || !me?.id) {
       return;
     }
@@ -717,7 +779,7 @@ export default function Home() {
             }))}
             onUserSearchChange={setUserSearch}
             isSearchingUsers={isSearchingUsers}
-            onSelectRoom={(userId) => setActiveUserId(userId)}
+            onSelectRoom={handleSelectRoom}
             onSendMessage={handleSendMessage}
             onUploadFile={handleUploadFile}
             onTypingStart={handleTypingStart}

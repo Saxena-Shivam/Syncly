@@ -32,11 +32,12 @@ export default function QRCodeModal({ token, onClose }: QRCodeModalProps) {
       try {
         const { token: generatedToken, expiresAt } =
           await generateQrToken(token);
-        const payload = JSON.stringify({
-          type: "syncly-pair",
-          token: generatedToken,
-          expiresAt,
-        });
+        const appBaseUrl =
+          process.env.NEXT_PUBLIC_APP_URL ||
+          (typeof window !== "undefined" ? window.location.origin : "");
+        const payload = appBaseUrl
+          ? `${appBaseUrl}/?pairToken=${encodeURIComponent(generatedToken)}`
+          : `syncly-pair:${generatedToken}`;
 
         const url = await QRCode.toDataURL(payload, {
           margin: 1,
@@ -58,6 +59,40 @@ export default function QRCodeModal({ token, onClose }: QRCodeModalProps) {
     void loadQr();
   }, [token]);
 
+  const extractPairingToken = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return "";
+    }
+
+    if (trimmed.startsWith("syncly-pair:")) {
+      return trimmed.slice("syncly-pair:".length).trim();
+    }
+
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (parsed && typeof parsed.token === "string") {
+        return parsed.token.trim();
+      }
+    } catch (_error) {
+      // Ignore parse errors and continue with URL/raw token parsing.
+    }
+
+    try {
+      const maybeUrl = new URL(trimmed);
+      const tokenFromQuery =
+        maybeUrl.searchParams.get("pairToken") ||
+        maybeUrl.searchParams.get("token");
+      if (tokenFromQuery) {
+        return tokenFromQuery.trim();
+      }
+    } catch (_error) {
+      // Not a URL.
+    }
+
+    return trimmed;
+  };
+
   const handleCopyToken = async () => {
     if (!pairingToken) {
       return;
@@ -71,7 +106,7 @@ export default function QRCodeModal({ token, onClose }: QRCodeModalProps) {
   };
 
   const handleManualConnect = async () => {
-    const toConnect = manualToken.trim();
+    const toConnect = extractPairingToken(manualToken);
     if (!toConnect) {
       return;
     }
@@ -141,7 +176,7 @@ export default function QRCodeModal({ token, onClose }: QRCodeModalProps) {
           <input
             value={manualToken}
             onChange={(event) => setManualToken(event.target.value)}
-            placeholder="Paste pairing token to connect"
+            placeholder="Paste scanned value or pairing token"
             className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
           />
         </div>
