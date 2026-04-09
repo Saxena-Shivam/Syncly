@@ -72,6 +72,22 @@ app.get("/health", (req, res) => {
   });
 });
 
+app.use((req, res, next) => {
+  if (req.path === "/health") {
+    return next();
+  }
+
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      message:
+        "Database is not connected yet. Please wait or check MongoDB Atlas network access.",
+      db: "unavailable",
+    });
+  }
+
+  return next();
+});
+
 app.use("/", routes);
 app.use("/api", routes);
 
