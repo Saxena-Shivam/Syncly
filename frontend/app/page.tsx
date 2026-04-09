@@ -17,7 +17,6 @@ import ChatLayout from "@/components/chat/ChatLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  API_BASE,
   ApiMessage,
   ApiUser,
   connectViaQrToken,
@@ -52,33 +51,43 @@ const TOKEN_KEY = "syncly_token";
 const featureCards = [
   {
     icon: Zap,
-    title: "Real-time Speed",
-    description: "Sub-second chat delivery, typing updates, and live presence.",
+    title: "Instant Conversations",
+    description: "Messages appear quickly so every chat feels natural.",
   },
   {
     icon: Wifi,
-    title: "Local + Cloud Ready",
-    description:
-      "Works on localhost today and is production-friendly for deployment.",
+    title: "Works Everywhere",
+    description: "Open Syncly on your phone or desktop and keep going.",
   },
   {
     icon: ShieldCheck,
-    title: "JWT Protected",
+    title: "Private Sign In",
     description:
-      "Your own users sign in with email and password. No Google client id shown to them.",
+      "Sign in with email and password using a simple, familiar flow.",
   },
   {
     icon: Upload,
-    title: "File Sharing Ready",
+    title: "Share Photos & Files",
+    description: "Send pictures and documents right inside the conversation.",
+  },
+
+  {
+    icon: Sparkles,
+    title: "Feels Fast",
     description:
-      "Backend supports image and video upload flow for chat attachments.",
+      "Everything responds right away, so chatting feels effortless.",
+  },
+
+  {
+    icon: Users,
+    title: "Easy to Use",
+    description: "Clean layout that feels simple from the first tap.",
   },
 ];
 
 const landingPoints = [
-  "Email/password sign-up and login",
-  "Live user presence and message history",
-  "Ready for uploads, QR pairing, and future features",
+  "See who is online and return to old chats instantly",
+  "Share files, pair devices, and stay connected",
 ];
 
 const fallbackAvatar = (name: string) =>
@@ -941,9 +950,11 @@ export default function Home() {
                   <p className="text-sm text-destructive">{errorText}</p>
                 )}
 
-                <button
+                <Button
                   type="button"
-                  className="text-sm text-muted-foreground underline underline-offset-4"
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-center rounded-full border-border/70 bg-background/70 text-foreground shadow-none hover:bg-accent/70"
                   onClick={() =>
                     setAuthMode((current) =>
                       current === "login" ? "register" : "login",
@@ -953,7 +964,7 @@ export default function Home() {
                   {authMode === "login"
                     ? "Need an account? Create one"
                     : "Already have an account? Sign in"}
-                </button>
+                </Button>
               </div>
             </section>
 
@@ -981,15 +992,6 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-
-              {/* <div className="mt-6 rounded-2xl border border-border bg-background/70 p-4 text-sm text-muted-foreground">
-                <p className="font-medium text-foreground">Backend status</p>
-                <p className="mt-1">Connected to {API_BASE}</p>
-                <p className="mt-1">
-                  Google client id is no longer required by the frontend auth
-                  flow.
-                </p>
-              </div> */}
             </section>
           </div>
         </div>
@@ -1022,13 +1024,11 @@ export default function Home() {
             Production-Ready Messaging
           </p>
           <h2 className="mt-3 max-w-3xl text-4xl font-semibold tracking-tight md:text-5xl">
-            Real-time team chat with email login, profile sync, and persistent
-            history.
+            A clean place to talk, share, and stay in touch.
           </h2>
           <p className="mt-4 max-w-2xl text-muted-foreground">
-            Syncly combines a modern app shell with a live backend powered by
-            Socket.io, MongoDB, secure JWT sessions, and upload-ready
-            architecture.
+            Syncly keeps conversations simple, fast, and organized so you can
+            focus on people instead of settings.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
