@@ -5,6 +5,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const compression = require("compression");
+const mongoose = require("mongoose");
 const rateLimit = require("express-rate-limit");
 const mongoSanitize = require("express-mongo-sanitize");
 const { Server } = require("socket.io");
@@ -53,7 +54,22 @@ app.use(
 app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 
 app.get("/health", (req, res) => {
-  res.json({ ok: true, service: "syncly-backend", ts: Date.now() });
+  const readyState = mongoose.connection.readyState;
+  const dbStates = {
+    0: "disconnected",
+    1: "connected",
+    2: "connecting",
+    3: "disconnecting",
+  };
+
+  const dbState = dbStates[readyState] || "unknown";
+
+  res.status(readyState === 1 ? 200 : 503).json({
+    ok: readyState === 1,
+    service: "syncly-backend",
+    db: dbState,
+    ts: Date.now(),
+  });
 });
 
 app.use("/", routes);
@@ -63,15 +79,15 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 const bootstrap = async () => {
-  await connectDB();
   server.listen(env.port, "0.0.0.0", () => {
     // eslint-disable-next-line no-console
     console.log(`Syncly backend listening on http://0.0.0.0:${env.port}`);
   });
+
+  connectDB().catch((error) => {
+    // eslint-disable-next-line no-console
+    console.error("MongoDB background connection stopped", error);
+  });
 };
 
-bootstrap().catch((error) => {
-  // eslint-disable-next-line no-console
-  console.error("Failed to start server", error);
-  process.exit(1);
-});
+bootstrap();

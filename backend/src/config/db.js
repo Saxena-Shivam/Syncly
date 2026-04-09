@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 const env = require("./env");
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const maskMongoUri = (uri) => {
   if (!uri || typeof uri !== "string") {
     return "<empty>";
@@ -17,15 +19,37 @@ const connectDB = async () => {
   // eslint-disable-next-line no-console
   console.log(`[startup] mongo uri: ${maskMongoUri(env.mongoUri)}`);
 
-  try {
-    await mongoose.connect(env.mongoUri, {
-      autoIndex: true,
-      maxPoolSize: 20,
-    });
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("[startup] MongoDB connection failed", error.message);
-    throw error;
+  let attempt = 0;
+
+  while (true) {
+    attempt += 1;
+
+    try {
+      await mongoose.connect(env.mongoUri, {
+        autoIndex: true,
+        maxPoolSize: 20,
+        serverSelectionTimeoutMS: env.mongoServerSelectionTimeoutMs,
+      });
+      break;
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(
+        `[startup] MongoDB connection failed (attempt ${attempt})`,
+        error.message,
+      );
+
+      const maxRetries = env.mongoConnectMaxRetries;
+      if (maxRetries > 0 && attempt >= maxRetries) {
+        throw error;
+      }
+
+      // eslint-disable-next-line no-console
+      console.log(
+        `[startup] retrying MongoDB in ${env.mongoConnectRetryMs}ms...`,
+      );
+      // eslint-disable-next-line no-await-in-loop
+      await sleep(env.mongoConnectRetryMs);
+    }
   }
 
   // eslint-disable-next-line no-console
