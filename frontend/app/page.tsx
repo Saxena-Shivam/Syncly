@@ -97,6 +97,7 @@ export default function Home() {
   const [userSearch, setUserSearch] = useState("");
   const [isSearchingUsers, setIsSearchingUsers] = useState(false);
   const [activeUserId, setActiveUserId] = useState("");
+  const [unreadByUser, setUnreadByUser] = useState<Record<string, number>>({});
   const [messagesByUser, setMessagesByUser] = useState<
     Record<string, ChatMessage[]>
   >({});
@@ -156,7 +157,7 @@ export default function Home() {
       return {
         id: user.id,
         name: isSelfRoom ? `${user.username} (You)` : user.username,
-        unreadCount: 0,
+        unreadCount: unreadByUser[user.id] || 0,
         lastMessage:
           last?.content ||
           user.lastMessage ||
@@ -178,7 +179,7 @@ export default function Home() {
     });
 
     return rooms.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-  }, [me?.id, users, messagesByUser]);
+  }, [me?.id, unreadByUser, users, messagesByUser]);
 
   const activeMessages = messagesByUser[activeUserId] || [];
 
@@ -261,6 +262,7 @@ export default function Home() {
         setSearchResults([]);
         setScreen("chat");
         setActiveUserId(firstRoomId);
+        setUnreadByUser({});
 
         if (typeof window !== "undefined") {
           localStorage.setItem(TOKEN_KEY, sessionToken);
@@ -279,6 +281,7 @@ export default function Home() {
         setUsers([]);
         setSearchResults([]);
         setActiveUserId("");
+        setUnreadByUser({});
         if (typeof window !== "undefined") {
           localStorage.removeItem(TOKEN_KEY);
         }
@@ -298,6 +301,7 @@ export default function Home() {
     setUsers([]);
     setSearchResults([]);
     setActiveUserId("");
+    setUnreadByUser({});
     setMessagesByUser({});
     setErrorText("");
     setEmail("");
@@ -461,6 +465,15 @@ export default function Home() {
   const handleSelectRoom = useCallback(
     (userId: string) => {
       setActiveUserId(userId);
+      setUnreadByUser((prev) => {
+        if (!prev[userId]) {
+          return prev;
+        }
+
+        const next = { ...prev };
+        delete next[userId];
+        return next;
+      });
 
       setUsers((prev) => {
         if (prev.some((user) => user.id === userId)) {
@@ -543,6 +556,13 @@ export default function Home() {
         ...prev,
         [roomId]: [...(prev[roomId] || []), incoming],
       }));
+
+      if (senderId !== me.id && roomId !== activeUserIdRef.current) {
+        setUnreadByUser((prev) => ({
+          ...prev,
+          [roomId]: (prev[roomId] || 0) + 1,
+        }));
+      }
 
       const target = latestLookup[otherUserId];
       if (target) {
@@ -721,11 +741,41 @@ export default function Home() {
 
   if (isBootstrapping) {
     return (
-      <main className="min-h-screen bg-background text-foreground flex items-center justify-center px-6">
-        <div className="rounded-2xl border border-border bg-card px-8 py-6 shadow-sm">
-          <p className="text-sm text-muted-foreground">
-            Loading your Syncly workspace...
-          </p>
+      <main className="min-h-screen bg-background text-foreground flex items-center justify-center px-4 sm:px-6 overflow-hidden relative">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -left-16 top-12 h-44 w-44 rounded-full bg-primary/18 blur-3xl animate-float" />
+          <div className="absolute right-0 top-1/2 h-56 w-56 -translate-y-1/2 rounded-full bg-accent/14 blur-3xl animate-float-delayed" />
+          <div className="absolute bottom-10 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full bg-secondary/18 blur-3xl animate-pulse-soft" />
+        </div>
+
+        <div className="relative w-full max-w-md rounded-[2rem] border border-border/80 bg-card/85 backdrop-blur-xl shadow-[0_18px_60px_rgba(0,0,0,0.14)] p-6 sm:p-8">
+          <div className="flex items-center gap-4">
+            <div className="relative h-14 w-14 rounded-2xl bg-background/70 border border-border overflow-hidden">
+              <div className="absolute inset-0 animate-shimmer bg-gradient-to-r from-transparent via-white/25 to-transparent opacity-70" />
+              <div className="absolute inset-3 rounded-xl bg-primary/55 animate-pulse-soft" />
+            </div>
+
+            <div className="flex-1">
+              <div className="h-3 w-24 rounded-full bg-muted/70 animate-shimmer" />
+              <div className="mt-3 h-5 w-40 rounded-full bg-muted/80 animate-shimmer" />
+            </div>
+          </div>
+
+          <div className="mt-6 space-y-3">
+            <div className="h-3 w-full rounded-full bg-background/80 border border-border/60 overflow-hidden">
+              <div className="h-full w-2/3 rounded-full bg-gradient-to-r from-primary via-accent to-secondary animate-pulse-soft" />
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="h-16 rounded-2xl bg-background/70 border border-border/60 animate-shimmer" />
+              <div className="h-16 rounded-2xl bg-background/70 border border-border/60 animate-shimmer [animation-delay:150ms]" />
+              <div className="h-16 rounded-2xl bg-background/70 border border-border/60 animate-shimmer [animation-delay:300ms]" />
+            </div>
+
+            <p className="pt-2 text-sm text-muted-foreground text-center">
+              Loading your Syncly workspace...
+            </p>
+          </div>
         </div>
       </main>
     );
